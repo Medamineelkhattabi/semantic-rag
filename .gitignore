@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Secrets
+.env
+
+# Caches / build artefacts
+backend/cache/
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Reference clone (not part of the project)
+semantica_probe/
+
+.DS_Store
+*.tsbuildinfo
+.pytest_cache/

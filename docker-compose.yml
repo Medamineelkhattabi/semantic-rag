@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ragl-backend
+    env_file:
+      - .env
+    environment:
+      # Container-local paths override any host values from .env.
+      DOCUMENTS_DIR: /app/data/documents
+      CACHE_DIR: /app/cache
+    volumes:
+      # Persist the extracted knowledge graph + embedding cache across restarts,
+      # so the LLM extraction pass only runs once.
+      - rag-cache:/app/cache
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ragl-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  rag-cache:
