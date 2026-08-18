@@ -16,6 +16,30 @@ variable is the retrieval strategy.
 The semantic side is built on [**Semantica**](https://github.com/semantica-agi/semantica)
 (v0.6.5) — its provider layer, `GraphBuilder`, `KnowledgeGraph` and `PathFinder`.
 
+![How it works](images/00-how-it-works.png)
+
+---
+
+## Screenshots
+
+**Same question, same model — only the retrieval differs.** Basic RAG reports it
+cannot answer; Semantic RAG returns the chain with per-hop citations.
+
+![Side by side comparison](images/01-compare-answers.png)
+
+**The answer chain.** Every hop names the document that proves it.
+
+![Why Semantic RAG](images/02-why-semantic-rag.png)
+
+**The knowledge graph**, with the path used for that answer highlighted.
+
+![Knowledge graph with answer path](images/03-knowledge-graph-path.png)
+
+**The Context Inspector** — the exact prompt each pipeline sent. Chunks of prose
+on the left; reasoning chains, typed facts and provenance on the right.
+
+![Context inspector](images/04-context-inspector.png)
+
 ---
 
 ## What it demonstrates
