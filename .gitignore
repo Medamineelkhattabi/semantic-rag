@@ -20,3 +20,4 @@ semantica_probe/
 .DS_Store
 *.tsbuildinfo
 .pytest_cache/
+linkedin-post.txt
