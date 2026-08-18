@@ -4,7 +4,7 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
 [![Semantica 0.6.5](https://img.shields.io/badge/semantica-0.6.5-8b5cf6.svg)](https://github.com/semantica-agi/semantica)
-[![Tests](https://img.shields.io/badge/tests-191%20backend%20%2B%2017%20frontend-brightgreen.svg)](#tests)
+[![CI](https://github.com/Medamineelkhattabi/semantic-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/Medamineelkhattabi/semantic-rag/actions/workflows/ci.yml)
 
 An interactive lab that runs **Basic RAG** and **Semantic (graph) RAG** side by side
 on the *same* corpus, the *same* embedding model and the *same* LLM — so the only
@@ -17,6 +17,16 @@ The semantic side is built on [**Semantica**](https://github.com/semantica-agi/s
 (v0.6.5) — its provider layer, `GraphBuilder`, `KnowledgeGraph` and `PathFinder`.
 
 ![How it works](images/00-how-it-works.png)
+
+---
+
+**[Screenshots](#screenshots)** ·
+**[Results](#measured-results)** ·
+**[Quick start](#quick-start)** ·
+**[How it works](#architecture)** ·
+**[Fairness](#fairness)** ·
+**[Tests](#tests)** ·
+**[API](#api)**
 
 ---
 
@@ -39,6 +49,100 @@ cannot answer; Semantic RAG returns the chain with per-hop citations.
 on the left; reasoning chains, typed facts and provenance on the right.
 
 ![Context inspector](images/04-context-inspector.png)
+
+---
+
+## Measured results
+
+**Tied at one hop. 0.21 vs 0.75 at four.** That gap is the whole point — and the
+costs that come with it are in the table below, not hidden.
+
+One complete run, 15 questions, zero errors.
+Configuration: answers `openai/gpt-oss-20b` via Groq (identical for both sides),
+extraction `openai/gpt-oss-120b`, embeddings `local:BAAI/bge-small-en-v1.5`
+(identical for both sides), `TOP_K=5`, `GRAPH_MAX_HOPS=5`.
+
+| Metric | Basic RAG | Semantic RAG |
+|---|---|---|
+| Answer correctness | 0.672 | **0.911** |
+| Recall | 0.730 | **1.000** |
+| Context coverage | 0.806 | **0.978** |
+| Precision | **0.534** | 0.322 |
+| MRR | **0.822** | 0.772 |
+| F1 | **0.558** | 0.458 |
+| Mean latency | **6.4 s** | 24.9 s |
+
+Answer correctness by hop count — the point of the exercise:
+
+| Hops | n | Basic RAG | Semantic RAG |
+|---|---|---|---|
+| 1 | 5 | 1.00 | 1.00 |
+| 2 | 3 | 0.83 | 1.00 |
+| 3 | 2 | 0.54 | 1.00 |
+| 4 | 4 | **0.21** | **0.75** |
+| 5 | 1 | 0.67 | 0.67 |
+
+Semantic RAG wins 6 questions, Basic RAG wins none, 9 are ties.
+
+**Read this honestly.** Basic RAG is fully competitive at one hop and degrades as
+the chain lengthens; that is the claim being tested, and it holds. But Basic RAG
+also wins precision, MRR and F1, and is roughly 4x faster. Semantic RAG buys
+perfect recall by surfacing ~10 documents where Basic surfaces 5, which drags
+its precision denominator down. If your questions are single-hop lookups, the
+graph is overhead you do not need. The tie at 5 hops (n=1) is a single question
+and carries no weight either way.
+
+Reproduce with `POST /api/benchmark/run`, or the **Benchmark** tab.
+Numbers will move with the model and provider you configure — nothing here is
+hardcoded.
+
+---
+
+## Quick start
+
+**Fastest path:** a free Groq key + local embeddings, no GPU and no paid
+services. `.env.example` has copy-paste recipes for Groq, OpenRouter, Mistral
+and local Ollama.
+
+### 1. Configure
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` — set `LLM_BASE_URL`, `LLM_API_KEY`, and the CF-Access headers if
+your gateway needs them. Any OpenAI-compatible endpoint works (Ollama, vLLM,
+OpenAI, LiteLLM, a local proxy).
+
+### 2. Run with Docker
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:5173**.
+
+### 3. Or run locally
+
+Backend:
+
+```bash
+python -m venv .venv && .venv/Scripts/activate && pip install -r backend/requirements.txt
+```
+
+```bash
+cd backend && uvicorn app.main:app --reload --port 8000
+```
+
+Frontend:
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+The first boot runs LLM extraction over the corpus (one call per document) and
+caches the result under `backend/cache/`. Later boots load from cache and are
+near-instant. The UI polls `/api/status` and shows build progress.
 
 ---
 
@@ -229,93 +333,6 @@ infrastructure outage as a retrieval failure — precisely the opposite of what
 the benchmark measures. The summary carries an `errored` count alongside
 `questions`, and the UI shows how many runs were excluded, so a degraded run can
 never be mistaken for a complete one.
-
----
-
-## Measured results
-
-One complete run, 15 questions, zero errors.
-Configuration: answers `openai/gpt-oss-20b` via Groq (identical for both sides),
-extraction `openai/gpt-oss-120b`, embeddings `local:BAAI/bge-small-en-v1.5`
-(identical for both sides), `TOP_K=5`, `GRAPH_MAX_HOPS=5`.
-
-| Metric | Basic RAG | Semantic RAG |
-|---|---|---|
-| Answer correctness | 0.672 | **0.911** |
-| Recall | 0.730 | **1.000** |
-| Context coverage | 0.806 | **0.978** |
-| Precision | **0.534** | 0.322 |
-| MRR | **0.822** | 0.772 |
-| F1 | **0.558** | 0.458 |
-| Mean latency | **6.4 s** | 24.9 s |
-
-Answer correctness by hop count — the point of the exercise:
-
-| Hops | n | Basic RAG | Semantic RAG |
-|---|---|---|---|
-| 1 | 5 | 1.00 | 1.00 |
-| 2 | 3 | 0.83 | 1.00 |
-| 3 | 2 | 0.54 | 1.00 |
-| 4 | 4 | **0.21** | **0.75** |
-| 5 | 1 | 0.67 | 0.67 |
-
-Semantic RAG wins 6 questions, Basic RAG wins none, 9 are ties.
-
-**Read this honestly.** Basic RAG is fully competitive at one hop and degrades as
-the chain lengthens; that is the claim being tested, and it holds. But Basic RAG
-also wins precision, MRR and F1, and is roughly 4x faster. Semantic RAG buys
-perfect recall by surfacing ~10 documents where Basic surfaces 5, which drags
-its precision denominator down. If your questions are single-hop lookups, the
-graph is overhead you do not need. The tie at 5 hops (n=1) is a single question
-and carries no weight either way.
-
-Reproduce with `POST /api/benchmark/run`, or the **Benchmark** tab.
-Numbers will move with the model and provider you configure — nothing here is
-hardcoded.
-
----
-
-## Quick start
-
-### 1. Configure
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` — set `LLM_BASE_URL`, `LLM_API_KEY`, and the CF-Access headers if
-your gateway needs them. Any OpenAI-compatible endpoint works (Ollama, vLLM,
-OpenAI, LiteLLM, a local proxy).
-
-### 2. Run with Docker
-
-```bash
-docker compose up --build
-```
-
-Open **http://localhost:5173**.
-
-### 3. Or run locally
-
-Backend:
-
-```bash
-python -m venv .venv && .venv/Scripts/activate && pip install -r backend/requirements.txt
-```
-
-```bash
-cd backend && uvicorn app.main:app --reload --port 8000
-```
-
-Frontend:
-
-```bash
-cd frontend && npm install && npm run dev
-```
-
-The first boot runs LLM extraction over the corpus (one call per document) and
-caches the result under `backend/cache/`. Later boots load from cache and are
-near-instant. The UI polls `/api/status` and shows build progress.
 
 ---
 
