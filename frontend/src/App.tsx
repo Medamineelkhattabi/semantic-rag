@@ -119,17 +119,17 @@ export default function App() {
   return (
     <div className="min-h-screen">
       {/* Header ---------------------------------------------------- */}
-      <header className="sticky top-0 z-30 border-b border-white/8 bg-ink-950/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-xl shadow-sm shadow-slate-900/5">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-6 py-3">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-lg shadow-sky-500/25">
               <BrainCircuit className="h-5 w-5 text-white" />
             </span>
             <div>
-              <h1 className="text-[15px] font-semibold tracking-tight text-slate-50">
+              <h1 className="text-[17px] font-semibold tracking-tight text-slate-900">
                 RAG Intelligence Lab
               </h1>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[13px] text-slate-600">
                 Basic RAG vs Semantic RAG · powered by Semantica
               </p>
             </div>
@@ -156,10 +156,10 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setTab(item.id)}
-                className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition ${
+                className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium transition ${
                   active
-                    ? 'border-sky-400 text-slate-100'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                    ? 'border-sky-600 text-slate-900'
+                    : 'border-transparent text-slate-600 hover:text-slate-800'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -174,12 +174,12 @@ export default function App() {
         {status?.state === 'building' ? (
           <Card className="mb-4 border-sky-400/25 p-4">
             <div className="flex items-center gap-3">
-              <Spinner className="h-4 w-4 text-sky-400" />
+              <Spinner className="h-4 w-4 text-sky-600" />
               <div>
-                <div className="text-xs font-medium text-slate-200">
+                <div className="text-[13px] font-medium text-slate-800">
                   Building pipelines — {status.stage || 'starting'}
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[13px] text-slate-600">
                   The knowledge graph is extracted once with the LLM, then cached to disk.
                 </div>
               </div>
@@ -190,13 +190,13 @@ export default function App() {
         {status?.state === 'error' ? (
           <Card className="mb-4 border-rose-400/30 p-4">
             <div className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <div>
-                <div className="text-xs font-semibold text-rose-300">Engine build failed</div>
-                <div className="mt-0.5 font-mono text-[11px] text-slate-400">{status.error}</div>
+                <div className="text-[13px] font-semibold text-rose-700">Engine build failed</div>
+                <div className="mt-0.5 font-mono text-[13px] text-slate-600">{status.error}</div>
                 <button
                   onClick={() => api.build().then(setStatus).catch(() => undefined)}
-                  className="mt-2 rounded border border-white/10 px-2 py-1 text-[11px] text-slate-300 hover:bg-white/5"
+                  className="mt-2 rounded border border-slate-300 px-2 py-1 text-[13px] text-slate-800 hover:bg-slate-100"
                 >
                   Retry build
                 </button>
@@ -207,7 +207,7 @@ export default function App() {
 
         {error ? (
           <Card className="mb-4 border-rose-400/30 p-3">
-            <div className="flex items-center gap-2 text-xs text-rose-300">
+            <div className="flex items-center gap-2 text-[13px] text-rose-700">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
@@ -227,8 +227,8 @@ export default function App() {
             {comparing ? (
               <Card className="p-10">
                 <div className="flex flex-col items-center gap-3">
-                  <Spinner className="h-6 w-6 text-sky-400" />
-                  <p className="text-sm text-slate-300">
+                  <Spinner className="h-6 w-6 text-sky-600" />
+                  <p className="text-[15px] text-slate-800">
                     Running both pipelines on the same question…
                   </p>
                 </div>
@@ -251,13 +251,13 @@ export default function App() {
                 {graph ? (
                   <Card className="p-5">
                     <div className="mb-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.13em] text-slate-400">
+                      <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.13em] text-slate-600">
                         <Network className="h-3.5 w-3.5" />
                         Knowledge graph — path used for this answer
                       </div>
                       <button
                         onClick={() => setTab('graph')}
-                        className="text-[11px] text-sky-400 hover:text-sky-300"
+                        className="text-[13px] text-sky-600 hover:text-sky-700"
                       >
                         open full view →
                       </button>
@@ -284,8 +284,8 @@ export default function App() {
           <Card className="p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-sm font-semibold text-slate-100">Knowledge Graph</h2>
-                <p className="text-[11px] text-slate-500">
+                <h2 className="text-[15px] font-semibold text-slate-900">Knowledge Graph</h2>
+                <p className="text-[13px] text-slate-600">
                   Extracted from the corpus by Semantica.
                   {graphStats
                     ? ` ${graphStats.entities ?? 0} entities · ${graphStats.relationships ?? 0} relationships.`
@@ -294,7 +294,7 @@ export default function App() {
                 </p>
               </div>
               {primaryPath ? (
-                <span className="rounded-lg border border-emerald-400/25 bg-emerald-500/8 px-2.5 py-1 font-mono text-[11px] text-emerald-300">
+                <span className="rounded-lg border border-emerald-400/25 bg-emerald-500/8 px-2.5 py-1 font-mono text-[13px] text-emerald-700">
                   {primaryPath.chain}
                 </span>
               ) : null}
@@ -330,9 +330,9 @@ export default function App() {
 /* ------------------------------------------------------------------ */
 function Chip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="hidden items-center gap-1 rounded-md border border-white/8 bg-white/[0.03] px-2 py-1 text-[10px] text-slate-500 md:inline-flex">
+    <span className="hidden items-center gap-1 rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[12px] text-slate-600 md:inline-flex">
       {label}
-      <span className="font-mono text-slate-300">{value}</span>
+      <span className="font-mono text-slate-800">{value}</span>
     </span>
   )
 }
@@ -340,14 +340,14 @@ function Chip({ label, value }: { label: string; value: string }) {
 function StatusPill({ status }: { status: EngineStatus | null }) {
   const state = status?.state ?? 'idle'
   const map = {
-    ready: { text: 'ready', color: 'bg-emerald-400', label: 'text-emerald-300' },
-    building: { text: 'building', color: 'bg-amber-400', label: 'text-amber-300' },
-    error: { text: 'error', color: 'bg-rose-400', label: 'text-rose-300' },
-    idle: { text: 'idle', color: 'bg-slate-400', label: 'text-slate-400' },
+    ready: { text: 'ready', color: 'bg-emerald-400', label: 'text-emerald-700' },
+    building: { text: 'building', color: 'bg-amber-400', label: 'text-amber-700' },
+    error: { text: 'error', color: 'bg-rose-400', label: 'text-rose-700' },
+    idle: { text: 'idle', color: 'bg-slate-400', label: 'text-slate-600' },
   }[state]
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-white/8 bg-white/[0.03] px-2 py-1 text-[10px]">
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[12px]">
       <span className={`h-1.5 w-1.5 rounded-full ${map.color} ${state === 'building' ? 'animate-pulse' : ''}`} />
       <span className={map.label}>{map.text}</span>
     </span>

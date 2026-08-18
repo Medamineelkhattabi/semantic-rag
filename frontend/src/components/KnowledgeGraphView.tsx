@@ -38,6 +38,10 @@ export const ROW_HEIGHT = 74
 export const NODE_WIDTH = 172
 export const NODE_HEIGHT = 62
 
+/** Edge palette. Exported so tests assert intent rather than a literal hex. */
+export const PATH_EDGE_COLOR = '#059669'
+export const BASE_EDGE_COLOR = '#94a3b8'
+
 type EntityNodeData = {
   label: string
   entityId: string
@@ -55,8 +59,8 @@ function EntityNode({ data }: NodeProps) {
     <div
       className={`relative rounded-lg border px-3 py-2 transition-all duration-300 ${color.bg} ${
         d.highlighted
-          ? 'border-emerald-300/80 shadow-[0_0_22px_rgba(52,211,153,0.35)] scale-[1.04]'
-          : `${color.border} ${d.dimmed ? 'opacity-25' : 'opacity-95'}`
+          ? 'border-emerald-500 shadow-[0_0_0_3px_rgba(5,150,105,0.25)] scale-[1.04]'
+          : `${color.border} ${d.dimmed ? 'opacity-30' : 'opacity-95'}`
       }`}
       style={{ width: NODE_WIDTH, height: NODE_HEIGHT }}
     >
@@ -64,20 +68,20 @@ function EntityNode({ data }: NodeProps) {
       <Handle type="source" position={Position.Right} />
 
       {d.pathIndex !== null ? (
-        <span className="absolute -left-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-bold text-emerald-950">
+        <span className="absolute -left-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[12px] font-bold text-emerald-950">
           {d.pathIndex + 1}
         </span>
       ) : null}
 
       <div className="flex items-center gap-1.5">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color.dot }} />
-        <span className="text-[8px] uppercase tracking-wider text-slate-500">{d.type}</span>
+        <span className="text-[11px] uppercase tracking-wider text-slate-600">{d.type}</span>
       </div>
-      <div className={`truncate text-xs font-semibold ${color.text}`} title={d.entityId}>
+      <div className={`truncate text-[13px] font-semibold ${color.text}`} title={d.entityId}>
         {d.entityId}
       </div>
       {d.label && d.label !== d.entityId ? (
-        <div className="truncate text-[9px] text-slate-500" title={d.label}>
+        <div className="truncate text-[11px] text-slate-600" title={d.label}>
           {d.label}
         </div>
       ) : null}
@@ -154,16 +158,16 @@ export function buildLayout(payload: GraphPayload, path: GraphPath | null) {
       animated: false,
       className: onPath ? 'edge-animated' : undefined,
       style: {
-        stroke: onPath ? '#34d399' : '#2a3547',
+        stroke: onPath ? PATH_EDGE_COLOR : BASE_EDGE_COLOR,
         strokeWidth: onPath ? 2.4 : 1,
         opacity: hasPath && !onPath ? 0.2 : 1,
       },
       labelStyle: {
-        fill: onPath ? '#6ee7b7' : '#64748b',
-        fontSize: 9,
+        fill: onPath ? '#047857' : '#64748b',
+        fontSize: 11,
         fontFamily: 'ui-monospace, monospace',
       },
-      labelBgStyle: { fill: '#0b0f18', fillOpacity: onPath ? 0.95 : 0.7 },
+      labelBgStyle: { fill: '#ffffff', fillOpacity: onPath ? 1 : 0.9 },
       labelBgPadding: [3, 1] as [number, number],
       labelBgBorderRadius: 3,
     }
@@ -207,17 +211,17 @@ function GraphInner({
       maxZoom={2}
       proOptions={{ hideAttribution: true }}
     >
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#1c2536" />
+      <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#cbd5e1" />
       <Controls
-        className="!border-white/10 !bg-ink-850 [&>button]:!border-white/8 [&>button]:!bg-ink-800 [&>button]:!fill-slate-400"
+        className="!border-slate-300 !bg-white [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!fill-slate-400"
         showInteractive={false}
       />
       <MiniMap
         pannable
         zoomable
         nodeColor={nodeColor}
-        maskColor="rgba(7,9,15,0.75)"
-        className="!border !border-white/8 !bg-ink-900"
+        maskColor="rgba(241,245,249,0.75)"
+        className="!border !border-slate-200 !bg-white"
       />
     </ReactFlow>
   )
@@ -236,7 +240,7 @@ export function KnowledgeGraphView({
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl border border-white/8 bg-ink-900/60"
+      className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
       style={{ height }}
     >
       <ReactFlowProvider>
@@ -244,14 +248,14 @@ export function KnowledgeGraphView({
       </ReactFlowProvider>
 
       {showLegend ? (
-        <div className="absolute right-3 top-3 rounded-lg border border-white/8 bg-ink-850/95 px-3 py-2 backdrop-blur">
+        <div className="absolute right-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 backdrop-blur">
           <div className="mb-1.5 flex items-center justify-between gap-4">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-[12px] font-semibold uppercase tracking-wider text-slate-600">
               Entity types
             </span>
             <button
               onClick={() => setShowLegend(false)}
-              className="text-[10px] text-slate-500 hover:text-slate-300"
+              className="text-[12px] text-slate-600 hover:text-slate-800"
             >
               hide
             </button>
@@ -263,15 +267,15 @@ export function KnowledgeGraphView({
                   className="h-2 w-2 rounded-full"
                   style={{ background: ENTITY_COLORS[type]?.dot }}
                 />
-                <span className="text-[10px] text-slate-400">{type}</span>
+                <span className="text-[12px] text-slate-600">{type}</span>
               </div>
             ))}
           </div>
           {path ? (
-            <div className="mt-2 border-t border-white/8 pt-1.5">
+            <div className="mt-2 border-t border-slate-200 pt-1.5">
               <div className="flex items-center gap-1.5">
                 <span className="h-0.5 w-4 bg-emerald-400" />
-                <span className="text-[10px] text-emerald-300">Answer path</span>
+                <span className="text-[12px] text-emerald-700">Answer path</span>
               </div>
             </div>
           ) : null}
@@ -279,7 +283,7 @@ export function KnowledgeGraphView({
       ) : (
         <button
           onClick={() => setShowLegend(true)}
-          className="absolute right-3 top-3 rounded-lg border border-white/8 bg-ink-850/95 px-2 py-1 text-[10px] text-slate-400 backdrop-blur hover:text-slate-200"
+          className="absolute right-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-2 py-1 text-[12px] text-slate-600 backdrop-blur hover:text-slate-800"
         >
           legend
         </button>

@@ -23,13 +23,14 @@ const METRICS = [
   { key: 'answer_correctness', label: 'Answer correctness' },
 ] as const
 
-const AXIS = { stroke: '#475569', fontSize: 11 }
+const AXIS = { stroke: '#64748b', fontSize: 12 }
 const TOOLTIP_STYLE = {
-  background: '#0f1420',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: '#ffffff',
+  border: '1px solid #cbd5e1',
   borderRadius: 8,
-  fontSize: 12,
-  color: '#e2e8f0',
+  fontSize: 13,
+  color: '#0f172a',
+  boxShadow: '0 8px 24px rgba(15,23,42,0.12)',
 }
 
 export function BenchmarkView({
@@ -87,12 +88,12 @@ export function BenchmarkView({
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/12 text-violet-300">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
             <FlaskConical className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-slate-100">Benchmark</h2>
-            <p className="text-[11px] text-slate-500">
+            <h2 className="text-[15px] font-semibold text-slate-900">Benchmark</h2>
+            <p className="text-[13px] text-slate-600">
               Same questions, same ground truth, same LLM — every metric computed at run time.
             </p>
           </div>
@@ -100,7 +101,7 @@ export function BenchmarkView({
         <button
           onClick={onRun}
           disabled={loading || disabled}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 px-4 py-2 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? <Spinner /> : <Play className="h-4 w-4" />}
           {loading ? 'Running…' : 'Run full benchmark'}
@@ -110,9 +111,9 @@ export function BenchmarkView({
       {loading ? (
         <Card className="p-10">
           <div className="flex flex-col items-center gap-3">
-            <Spinner className="h-6 w-6 text-sky-400" />
-            <p className="text-sm text-slate-300">Running both pipelines over every question…</p>
-            <p className="text-xs text-slate-500">
+            <Spinner className="h-6 w-6 text-sky-600" />
+            <p className="text-[15px] text-slate-800">Running both pipelines over every question…</p>
+            <p className="text-[13px] text-slate-600">
               Two LLM calls per question — this takes a few minutes.
             </p>
           </div>
@@ -129,15 +130,15 @@ export function BenchmarkView({
       {result ? (
         <>
           {result.meta.errors.length ? (
-            <Card className="border-rose-400/25 p-4">
+            <Card className="border-rose-300 p-4">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                 <div>
-                  <div className="text-xs font-semibold text-rose-300">
+                  <div className="text-[13px] font-semibold text-rose-700">
                     {result.meta.errors.length} question run(s) errored — excluded from the
                     averages rather than scored as zero
                   </div>
-                  <ul className="mt-1 list-disc pl-4 text-[11px] text-slate-400">
+                  <ul className="mt-1 list-disc pl-4 text-[13px] text-slate-600">
                     {[...new Set(result.meta.errors)].slice(0, 5).map((error) => (
                       <li key={error}>{error}</li>
                     ))}
@@ -151,7 +152,7 @@ export function BenchmarkView({
           <Card className="p-5">
             <SectionTitle
               right={
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[12px] text-slate-600">
                   {result.summary.semantic.questions} scored
                   {result.summary.semantic.errored > 0
                     ? ` · ${result.summary.semantic.errored} excluded (errored)`
@@ -164,12 +165,12 @@ export function BenchmarkView({
             </SectionTitle>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-sm">
+              <table className="w-full min-w-[560px] text-[15px]">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10px] uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-200 text-[12px] uppercase tracking-wider text-slate-600">
                     <th className="py-2 text-left font-medium">Metric</th>
-                    <th className="py-2 text-right font-medium text-amber-300/80">Basic RAG</th>
-                    <th className="py-2 text-right font-medium text-emerald-300/80">Semantic RAG</th>
+                    <th className="py-2 text-right font-medium text-amber-700">Basic RAG</th>
+                    <th className="py-2 text-right font-medium text-emerald-700">Semantic RAG</th>
                     <th className="py-2 text-right font-medium">Δ</th>
                   </tr>
                 </thead>
@@ -179,14 +180,14 @@ export function BenchmarkView({
                     const semantic = result.summary.semantic[metric.key]
                     const delta = semantic - basic
                     return (
-                      <tr key={metric.key} className="border-b border-white/4">
-                        <td className="py-2.5 text-slate-300">{metric.label}</td>
+                      <tr key={metric.key} className="border-b border-slate-200">
+                        <td className="py-2.5 text-slate-800">{metric.label}</td>
                         <td className="py-2.5">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-20">
                               <ScoreBar value={basic} tone="basic" />
                             </div>
-                            <span className="w-11 text-right font-mono tabular-nums text-slate-300">
+                            <span className="w-11 text-right font-mono tabular-nums text-slate-800">
                               {pct(basic)}
                             </span>
                           </div>
@@ -196,17 +197,17 @@ export function BenchmarkView({
                             <div className="w-20">
                               <ScoreBar value={semantic} tone="semantic" />
                             </div>
-                            <span className="w-11 text-right font-mono tabular-nums text-slate-300">
+                            <span className="w-11 text-right font-mono tabular-nums text-slate-800">
                               {pct(semantic)}
                             </span>
                           </div>
                         </td>
                         <td
-                          className={`py-2.5 text-right font-mono text-xs tabular-nums ${
+                          className={`py-2.5 text-right font-mono text-[13px] tabular-nums ${
                             delta > 0.001
-                              ? 'text-emerald-400'
+                              ? 'text-emerald-600'
                               : delta < -0.001
-                                ? 'text-rose-400'
+                                ? 'text-rose-600'
                                 : 'text-slate-600'
                           }`}
                         >
@@ -217,18 +218,18 @@ export function BenchmarkView({
                     )
                   })}
                   <tr>
-                    <td className="py-2.5 text-slate-300">Mean latency</td>
-                    <td className="py-2.5 text-right font-mono tabular-nums text-slate-300">
+                    <td className="py-2.5 text-slate-800">Mean latency</td>
+                    <td className="py-2.5 text-right font-mono tabular-nums text-slate-800">
                       {ms(result.summary.basic.latency_ms)}
                     </td>
-                    <td className="py-2.5 text-right font-mono tabular-nums text-slate-300">
+                    <td className="py-2.5 text-right font-mono tabular-nums text-slate-800">
                       {ms(result.summary.semantic.latency_ms)}
                     </td>
                     <td
-                      className={`py-2.5 text-right font-mono text-xs tabular-nums ${
+                      className={`py-2.5 text-right font-mono text-[13px] tabular-nums ${
                         result.summary.semantic.latency_ms > result.summary.basic.latency_ms
-                          ? 'text-rose-400'
-                          : 'text-emerald-400'
+                          ? 'text-rose-600'
+                          : 'text-emerald-600'
                       }`}
                     >
                       {result.summary.semantic.latency_ms > result.summary.basic.latency_ms
@@ -252,13 +253,13 @@ export function BenchmarkView({
               <SectionTitle>Retrieval &amp; answer quality (%)</SectionTitle>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={metricChartData} margin={{ top: 4, right: 8, bottom: 4, left: -18 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1c2536" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="metric" tick={AXIS} interval={0} angle={-14} textAnchor="end" height={62} />
                   <YAxis domain={[0, 100]} tick={AXIS} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="Basic" fill="#fbbf24" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Semantic" fill="#34d399" radius={[3, 3, 0, 0]} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(15,23,42,0.04)' }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Basic" fill="#d97706" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Semantic" fill="#059669" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -267,28 +268,28 @@ export function BenchmarkView({
               <SectionTitle>Answer correctness by hop count (%)</SectionTitle>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={hopChartData} margin={{ top: 4, right: 8, bottom: 4, left: -18 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1c2536" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                   <XAxis dataKey="hops" tick={AXIS} />
                   <YAxis domain={[0, 100]} tick={AXIS} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Line
                     type="monotone"
                     dataKey="Basic"
-                    stroke="#fbbf24"
+                    stroke="#d97706"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#fbbf24' }}
+                    dot={{ r: 3, fill: '#d97706' }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Semantic"
-                    stroke="#34d399"
+                    stroke="#059669"
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#34d399' }}
+                    dot={{ r: 3, fill: '#059669' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-              <p className="mt-1 text-[10px] text-slate-500">
+              <p className="mt-1 text-[12px] text-slate-600">
                 The gap should widen as questions require more hops.
               </p>
             </Card>
@@ -301,13 +302,13 @@ export function BenchmarkView({
                   layout="vertical"
                   margin={{ top: 4, right: 16, bottom: 4, left: 26 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1c2536" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                   <XAxis type="number" tick={AXIS} />
                   <YAxis type="category" dataKey="name" tick={AXIS} width={70} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="Basic" fill="#fbbf24" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey="Semantic" fill="#34d399" radius={[0, 3, 3, 0]} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(15,23,42,0.04)' }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Basic" fill="#d97706" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey="Semantic" fill="#059669" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -317,19 +318,19 @@ export function BenchmarkView({
           <Card className="p-5">
             <SectionTitle>Per-question results</SectionTitle>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-xs">
+              <table className="w-full min-w-[900px] text-[13px]">
                 <thead>
-                  <tr className="border-b border-white/8 text-[10px] uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-200 text-[12px] uppercase tracking-wider text-slate-600">
                     <th className="py-2 pr-2 text-left font-medium">Question</th>
                     <th className="px-1 py-2 text-center font-medium">Hops</th>
-                    <th className="px-2 py-2 text-center font-medium text-amber-300/80" colSpan={4}>
+                    <th className="px-2 py-2 text-center font-medium text-amber-700" colSpan={4}>
                       Basic
                     </th>
-                    <th className="px-2 py-2 text-center font-medium text-emerald-300/80" colSpan={4}>
+                    <th className="px-2 py-2 text-center font-medium text-emerald-700" colSpan={4}>
                       Semantic
                     </th>
                   </tr>
-                  <tr className="border-b border-white/8 text-[9px] uppercase tracking-wider text-slate-600">
+                  <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600">
                     <th /> <th />
                     <th className="px-1 py-1 text-right">P</th>
                     <th className="px-1 py-1 text-right">R</th>
@@ -349,44 +350,44 @@ export function BenchmarkView({
                       <Fragment key={row.id}>
                         <tr
                           onClick={() => setExpanded(open ? null : row.id)}
-                          className={`cursor-pointer border-b border-white/4 transition hover:bg-white/[0.03] ${
-                            open ? 'bg-white/[0.03]' : ''
+                          className={`cursor-pointer border-b border-slate-200 transition hover:bg-slate-100 ${
+                            open ? 'bg-slate-100' : ''
                           }`}
                         >
                           <td className="max-w-[380px] py-2 pr-2">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-[10px] text-slate-600">{row.id}</span>
-                              {better ? <span className="text-emerald-400">▲</span> : null}
-                              <span className="truncate text-slate-300">{row.question}</span>
+                              <span className="font-mono text-[12px] text-slate-600">{row.id}</span>
+                              {better ? <span className="text-emerald-600">▲</span> : null}
+                              <span className="truncate text-slate-800">{row.question}</span>
                             </div>
                           </td>
-                          <td className="px-1 py-2 text-center font-mono text-slate-500">
+                          <td className="px-1 py-2 text-center font-mono text-slate-600">
                             {row.hops}
                           </td>
                           {[row.basic, row.semantic].map((score, index) => (
                             <Fragment key={index}>
                               <td
-                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-400"
+                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-600"
                               >
                                 {pct(score.precision)}
                               </td>
                               <td
-                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-400"
+                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-600"
                               >
                                 {pct(score.recall)}
                               </td>
                               <td
-                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-400"
+                                className="px-1 py-2 text-right font-mono tabular-nums text-slate-600"
                               >
                                 {score.mrr.toFixed(2)}
                               </td>
                               <td
                                 className={`px-1 py-2 text-right font-mono tabular-nums ${
                                   score.answer_correctness >= 0.999
-                                    ? 'text-emerald-400'
+                                    ? 'text-emerald-600'
                                     : score.answer_correctness <= 0.001
-                                      ? 'text-rose-400'
-                                      : 'text-slate-300'
+                                      ? 'text-rose-600'
+                                      : 'text-slate-800'
                                 }`}
                               >
                                 {pct(score.answer_correctness)}
@@ -395,7 +396,7 @@ export function BenchmarkView({
                           ))}
                         </tr>
                         {open ? (
-                          <tr className="border-b border-white/6 bg-black/25">
+                          <tr className="border-b border-slate-200 bg-slate-50">
                             <td colSpan={10} className="px-3 py-3">
                               <div className="grid gap-3 md:grid-cols-2">
                                 {(
@@ -408,28 +409,28 @@ export function BenchmarkView({
                                     key={label}
                                     className={`rounded-lg border p-3 ${
                                       tone === 'amber'
-                                        ? 'border-amber-400/20'
-                                        : 'border-emerald-400/20'
+                                        ? 'border-amber-300'
+                                        : 'border-emerald-300'
                                     }`}
                                   >
                                     <div
-                                      className={`mb-1.5 text-[10px] font-semibold uppercase tracking-wider ${
-                                        tone === 'amber' ? 'text-amber-300' : 'text-emerald-300'
+                                      className={`mb-1.5 text-[12px] font-semibold uppercase tracking-wider ${
+                                        tone === 'amber' ? 'text-amber-700' : 'text-emerald-700'
                                       }`}
                                     >
                                       {label}
                                     </div>
-                                    <p className="mb-2 max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-400">
+                                    <p className="mb-2 max-h-32 overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-slate-600">
                                       {score.answer || score.error || '—'}
                                     </p>
                                     <div className="flex flex-wrap gap-1">
                                       {score.retrieved_docs.map((doc) => (
                                         <span
                                           key={doc}
-                                          className={`rounded px-1 py-0.5 font-mono text-[9px] ${
+                                          className={`rounded px-1 py-0.5 font-mono text-[11px] ${
                                             row.relevantDocs.includes(doc)
-                                              ? 'bg-emerald-500/12 text-emerald-300'
-                                              : 'bg-white/5 text-slate-600'
+                                              ? 'bg-emerald-50 text-emerald-700'
+                                              : 'bg-slate-100 text-slate-600'
                                           }`}
                                         >
                                           {doc}
@@ -437,14 +438,14 @@ export function BenchmarkView({
                                       ))}
                                     </div>
                                     {score.missed_keypoints.length ? (
-                                      <div className="mt-1.5 text-[10px] text-rose-400/80">
+                                      <div className="mt-1.5 text-[12px] text-rose-600">
                                         missed: {score.missed_keypoints.join(', ')}
                                       </div>
                                     ) : null}
                                   </div>
                                 ))}
                               </div>
-                              <div className="mt-2 text-[10px] text-slate-600">
+                              <div className="mt-2 text-[12px] text-slate-600">
                                 Ground-truth documents: {row.relevantDocs.join(', ')}
                               </div>
                             </td>
@@ -466,10 +467,10 @@ export function BenchmarkView({
                 const basic = result.byDifficulty.basic[level]
                 const semantic = result.byDifficulty.semantic[level]
                 return (
-                  <div key={level} className="rounded-lg border border-white/6 bg-white/[0.02] p-3">
+                  <div key={level} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold capitalize text-slate-200">{level}</span>
-                      <span className="text-[10px] text-slate-600">{basic.questions}q</span>
+                      <span className="text-[13px] font-semibold capitalize text-slate-800">{level}</span>
+                      <span className="text-[12px] text-slate-600">{basic.questions}q</span>
                     </div>
                     {(
                       [
@@ -479,12 +480,12 @@ export function BenchmarkView({
                       ] as const
                     ).map(([label, key]) => (
                       <div key={key} className="mb-1.5">
-                        <div className="flex justify-between text-[10px] text-slate-500">
+                        <div className="flex justify-between text-[12px] text-slate-600">
                           <span>{label}</span>
                           <span className="font-mono">
-                            <span className="text-amber-300/80">{pct(basic[key])}</span>
-                            <span className="mx-1 text-slate-700">/</span>
-                            <span className="text-emerald-300/80">{pct(semantic[key])}</span>
+                            <span className="text-amber-700">{pct(basic[key])}</span>
+                            <span className="mx-1 text-slate-9000">/</span>
+                            <span className="text-emerald-700">{pct(semantic[key])}</span>
                           </span>
                         </div>
                         <div className="mt-0.5 flex gap-1">

@@ -1,17 +1,8 @@
 @import 'tailwindcss';
 @import '@xyflow/react/dist/style.css';
 
-@theme {
-  --color-ink-950: #07090f;
-  --color-ink-900: #0b0f18;
-  --color-ink-850: #0f1420;
-  --color-ink-800: #141a29;
-  --color-ink-700: #1d2637;
-  --color-ink-600: #2a3547;
-}
-
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -22,29 +13,31 @@ body,
 
 body {
   margin: 0;
+  /* Very faint tints so large white areas do not read as flat, while staying
+     bright enough to screenshot well against a light feed. */
   background:
-    radial-gradient(1100px 600px at 12% -10%, rgba(56, 189, 248, 0.1), transparent 60%),
-    radial-gradient(900px 500px at 88% 0%, rgba(16, 185, 129, 0.08), transparent 55%),
-    #07090f;
-  color: #e2e8f0;
+    radial-gradient(1100px 620px at 10% -12%, rgba(56, 189, 248, 0.1), transparent 62%),
+    radial-gradient(900px 520px at 92% -4%, rgba(16, 185, 129, 0.09), transparent 58%),
+    #f6f8fb;
+  color: #0f172a;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Scrollbars ------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #24304a;
+  background: #cbd5e1;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #33415c;
+  background: #94a3b8;
 }
 
 /* React Flow ------------------------------------------------------- */
@@ -85,13 +78,13 @@ body {
 
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.45);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.35);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(52, 211, 153, 0);
+    box-shadow: 0 0 0 12px rgba(5, 150, 105, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
   }
 }
 .pulse-ring {

@@ -43,19 +43,19 @@ export function DatasetView() {
               onClick={() => setSelected(doc.docId)}
               className={`rounded-lg border px-2.5 py-2 text-left transition ${
                 selected === doc.docId
-                  ? 'border-sky-400/35 bg-sky-500/10'
-                  : 'border-transparent hover:bg-white/[0.03]'
+                  ? 'border-sky-300 bg-sky-50'
+                  : 'border-transparent hover:bg-slate-100'
               }`}
             >
-              <div className="truncate text-[11px] font-medium text-slate-200">{doc.title}</div>
-              <div className="mt-0.5 flex items-center gap-2 text-[9px] text-slate-500">
+              <div className="truncate text-[13px] font-medium text-slate-800">{doc.title}</div>
+              <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-600">
                 <span className="font-mono">{doc.docId}</span>
                 <span>{(doc.chars / 1000).toFixed(1)}k chars</span>
               </div>
             </button>
           ))}
         </div>
-        <p className="mt-3 border-t border-white/6 pt-3 text-[10px] leading-relaxed text-slate-500">
+        <p className="mt-3 border-t border-slate-200 pt-3 text-[12px] leading-relaxed text-slate-600">
           Both pipelines ingest this exact corpus. Facts in the supply chain are deliberately split
           across documents so that no single chunk contains two consecutive links.
         </p>
@@ -67,10 +67,10 @@ export function DatasetView() {
         </SectionTitle>
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Spinner className="h-5 w-5 text-sky-400" />
+            <Spinner className="h-5 w-5 text-sky-600" />
           </div>
         ) : (
-          <pre className="max-h-[640px] flex-1 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/25 px-4 py-3 font-mono text-[11px] leading-relaxed text-slate-400">
+          <pre className="max-h-[640px] flex-1 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-50 px-4 py-3 font-mono text-[13px] leading-relaxed text-slate-600">
             {text}
           </pre>
         )}

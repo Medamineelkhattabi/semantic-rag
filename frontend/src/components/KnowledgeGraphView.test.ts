@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BASE_EDGE_COLOR,
+  PATH_EDGE_COLOR,
   buildLayout,
   COLUMN_ORDER,
   COLUMN_WIDTH,
@@ -172,10 +174,11 @@ describe('buildLayout — path highlighting', () => {
     for (const edge of edges) {
       if (onPath.has(edge.id)) {
         expect(edge.className).toBe('edge-animated')
-        expect(edge.style?.stroke).toBe('#34d399')
+        expect(edge.style?.stroke).toBe(PATH_EDGE_COLOR)
         expect(edge.style?.opacity).toBe(1)
       } else {
         expect(edge.className).toBeUndefined()
+        expect(edge.style?.stroke).toBe(BASE_EDGE_COLOR)
         expect(edge.style?.opacity).toBeLessThan(1)
       }
     }
