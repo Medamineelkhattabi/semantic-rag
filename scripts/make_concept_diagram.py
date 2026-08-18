@@ -1,7 +1,9 @@
-"""Render the 'how it works' concept diagram used in the README and social posts.
+"""Render the 'how it works' hero image for the README and social posts.
 
-Produces a 1600x900 PNG (16:9, the aspect LinkedIn renders largest in-feed)
-using the same palette as the app so it sits alongside the UI screenshots.
+Deliberately drawn in the app's own visual language — same palette, same card
+treatment, same entity colours — so it reads as part of the product rather than
+a generic boxes-and-arrows diagram. Soft shadows and a faint dot grid give it
+the depth a flat vector export lacks.
 
     python scripts/make_concept_diagram.py [output.png]
 """
@@ -11,17 +13,28 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-W, H = 1600, 940
-BG = "#f6f8fb"
+W, H = 1600, 1000
+BG = "#f7f9fc"
+GRID = "#dde5ee"
 INK = "#0f172a"
 MUTED = "#475569"
 FAINT = "#94a3b8"
+HAIRLINE = "#e2e8f0"
 
-AMBER_BG, AMBER_BR, AMBER_TX = "#fffbeb", "#fcd34d", "#b45309"
-EMER_BG, EMER_BR, EMER_TX = "#ecfdf5", "#6ee7b7", "#047857"
-SLATE_BG, SLATE_BR = "#ffffff", "#cbd5e1"
+AMBER = {"bg": "#fffbeb", "br": "#fcd34d", "tx": "#b45309", "dot": "#f59e0b"}
+EMER = {"bg": "#ecfdf5", "br": "#6ee7b7", "tx": "#047857", "dot": "#10b981"}
+
+# Entity palette, matching ENTITY_COLORS in the frontend.
+ENTITY = {
+    "Project": {"bg": "#f0f9ff", "br": "#7dd3fc", "tx": "#0369a1", "dot": "#38bdf8"},
+    "Component": {"bg": "#f5f3ff", "br": "#c4b5fd", "tx": "#6d28d9", "dot": "#a78bfa"},
+    "Supplier": {"bg": "#fffbeb", "br": "#fcd34d", "tx": "#b45309", "dot": "#fbbf24"},
+    "Contract": {"bg": "#ecfdf5", "br": "#6ee7b7", "tx": "#047857", "dot": "#34d399"},
+    "Risk": {"bg": "#fff1f2", "br": "#fda4af", "tx": "#be123c", "dot": "#fb7185"},
+    "Employee": {"bg": "#f0fdfa", "br": "#5eead4", "tx": "#0f766e", "dot": "#2dd4bf"},
+}
 
 FONTS = "C:/Windows/Fonts/"
 
@@ -35,17 +48,44 @@ def font(name: str, size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-F_TITLE = font("segoeuib.ttf", 46)
-F_SUB = font("segoeui.ttf", 25)
-F_LANE = font("segoeuib.ttf", 27)
-F_BOX = font("segoeuisb.ttf", 20)
+F_EYEBROW = font("segoeuib.ttf", 19)
+F_TITLE = font("segoeuib.ttf", 58)
+F_SUB = font("segoeui.ttf", 26)
+F_LANE = font("segoeuib.ttf", 24)
+F_NODE = font("segoeuisb.ttf", 22)
+F_KIND = font("segoeuib.ttf", 14)
+F_STEP = font("segoeuisb.ttf", 20)
 F_SMALL = font("segoeui.ttf", 18)
-F_QUOTE = font("segoeuii.ttf", 24)
-F_TAG = font("segoeuib.ttf", 17)
+F_REL = font("consola.ttf", 16)
+F_QUOTE = font("segoeuii.ttf", 25)
+F_BIG = font("segoeuib.ttf", 40)
+F_TAG = font("segoeuib.ttf", 16)
 
 
-def rounded(d, box, radius, fill, outline=None, width=2):
-    d.rounded_rectangle(box, radius=radius, fill=fill, outline=outline, width=width)
+class Canvas:
+    """Base image plus a shadow layer, composited before anything is drawn."""
+
+    def __init__(self) -> None:
+        self.img = Image.new("RGB", (W, H), BG)
+        self.shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        self.sd = ImageDraw.Draw(self.shadow)
+
+    def drop(self, box, radius: int, alpha: int = 26, dy: int = 6) -> None:
+        x1, y1, x2, y2 = box
+        self.sd.rounded_rectangle(
+            (x1, y1 + dy, x2, y2 + dy), radius=radius, fill=(15, 23, 42, alpha)
+        )
+
+    def bake(self) -> ImageDraw.ImageDraw:
+        self.shadow = self.shadow.filter(ImageFilter.GaussianBlur(14))
+        self.img = Image.alpha_composite(self.img.convert("RGBA"), self.shadow).convert("RGB")
+        return ImageDraw.Draw(self.img)
+
+
+def dot_grid(d: ImageDraw.ImageDraw, gap: int = 26) -> None:
+    for x in range(60, W - 40, gap):
+        for y in range(150, H - 40, gap):
+            d.point((x, y), fill=GRID)
 
 
 def centred(d, text, cx, cy, fnt, fill):
@@ -53,119 +93,148 @@ def centred(d, text, cx, cy, fnt, fill):
     d.text((cx - (right - left) / 2 - left, cy - (bottom - top) / 2 - top), text, font=fnt, fill=fill)
 
 
-def arrow(d, x1, y, x2, colour, width=3):
-    d.line([(x1, y), (x2 - 9, y)], fill=colour, width=width)
-    d.polygon([(x2, y), (x2 - 12, y - 6), (x2 - 12, y + 6)], fill=colour)
+def width_of(d, text, fnt) -> int:
+    return d.textbbox((0, 0), text, font=fnt)[2]
 
 
-def lane(d, y, label, label_colour, steps, bg, br, tx, note):
-    """One pipeline row: a label, then boxes joined by arrows."""
-    d.text((70, y - 62), label, font=F_LANE, fill=label_colour)
-    d.text((70, y - 28), note, font=F_SMALL, fill=MUTED)
+def chevron(d, x, y, colour, size=9, w=3):
+    d.line([(x, y - size), (x + size - 2, y), (x, y + size)], fill=colour, width=w, joint="curve")
 
-    x = 70
-    box_h = 84
-    gap = 30
-    for i, (line1, line2) in enumerate(steps):
-        widths = [d.textbbox((0, 0), t, font=F_BOX)[2] for t in (line1, line2) if t]
-        box_w = max(max(widths) + 46, 150)
-        rounded(d, (x, y + 18, x + box_w, y + 18 + box_h), 14, bg, br, 2)
-        if line2:
-            centred(d, line1, x + box_w / 2, y + 18 + box_h / 2 - 13, F_BOX, tx)
-            centred(d, line2, x + box_w / 2, y + 18 + box_h / 2 + 13, F_SMALL, MUTED)
-        else:
-            centred(d, line1, x + box_w / 2, y + 18 + box_h / 2, F_BOX, tx)
-        x += box_w
-        if i < len(steps) - 1:
-            arrow(d, x + 6, y + 18 + box_h / 2, x + gap - 4, FAINT)
-            x += gap
+
+# ----------------------------------------------------------------------
+CHAIN = [
+    ("Project", "Project Phoenix", "uses"),
+    ("Component", "C-17", "supplied_by"),
+    ("Supplier", "Alpha Precision", "governed_by"),
+    ("Contract", "C-2048", "has_risk"),
+    ("Risk", "R-17", None),
+]
+
+BASIC_STEPS = ["Chunk", "Embed", "Vector search", "Top-K"]
+SEMANTIC_STEPS = ["Extract entities", "Build graph", "Traverse", "Expand context"]
 
 
 def main(out: Path) -> None:
-    img = Image.new("RGB", (W, H), BG)
-    d = ImageDraw.Draw(img)
+    c = Canvas()
+    probe = ImageDraw.Draw(c.img)
 
-    # Header ---------------------------------------------------------
-    d.text((70, 58), "Basic RAG vs Semantic RAG", font=F_TITLE, fill=INK)
+    # --- plan geometry, register shadows -----------------------------
+    # The dot sits at +18..28 and the kind label starts at +36, so the kind row
+    # needs more padding than the centred node label.
+    chain_w = [
+        max(width_of(probe, label, F_NODE) + 52, width_of(probe, kind, F_KIND) + 62)
+        for kind, label, _rel in CHAIN
+    ]
+    # Wide enough that a relation label ("supplied_by") never reaches a card.
+    gap = 148
+    total = sum(chain_w) + gap * (len(CHAIN) - 1)
+    chain_top, chain_h = 268, 92
+
+    x = (W - total) / 2
+    chain_boxes = []
+    for w in chain_w:
+        chain_boxes.append((x, chain_top, x + w, chain_top + chain_h))
+        c.drop((x, chain_top, x + w, chain_top + chain_h), 16)
+        x += w + gap
+
+    lane_boxes = []
+    for ly in (534, 726):
+        lane_boxes.append((70, ly, 1530, ly + 132))
+        c.drop((70, ly, 1530, ly + 132), 20, alpha=20)
+
+    d = c.bake()
+    dot_grid(d)
+
+    # --- header -------------------------------------------------------
+    d.text((70, 62), "RAG INTELLIGENCE LAB", font=F_EYEBROW, fill=EMER["tx"])
+    d.text((70, 96), "Retrieval is not one thing.", font=F_TITLE, fill=INK)
     d.text(
-        (70, 118),
+        (70, 180),
         "Same documents. Same embedding model. Same LLM. Only the retrieval differs.",
         font=F_SUB,
         fill=MUTED,
     )
 
-    # Shared input + headline result, side by side under the title.
-    # No connector lines: they had to cross the lanes to reach both, which
-    # read as noise. The label carries the meaning instead.
-    rounded(d, (70, 176, 470, 250), 14, SLATE_BG, SLATE_BR, 2)
-    d.text((94, 190), "SHARED INPUT", font=F_TAG, fill=MUTED)
-    d.text((94, 214), "12 enterprise documents — identical for both", font=F_SMALL, fill=INK)
+    # --- the chain (hero) ---------------------------------------------
+    for (kind, label, rel), box in zip(CHAIN, chain_boxes):
+        pal = ENTITY[kind]
+        d.rounded_rectangle(box, radius=16, fill=pal["bg"], outline=pal["br"], width=2)
+        x1, y1, x2, y2 = box
+        d.ellipse((x1 + 18, y1 + 25, x1 + 28, y1 + 35), fill=pal["dot"])
+        d.text((x1 + 36, y1 + 21), kind.upper(), font=F_KIND, fill=MUTED)
+        centred(d, label, (x1 + x2) / 2, y1 + 64, F_NODE, pal["tx"])
 
-    rounded(d, (1058, 156, 1530, 306), 16, "#ffffff", "#93c5fd", 2)
-    d.text((1086, 178), "ANSWER CORRECTNESS", font=F_TAG, fill="#1d4ed8")
-    d.text((1086, 204), "15 questions, ground truth, same LLM", font=F_SMALL, fill=MUTED)
-    for row_y, label, a, b in ((240, "single-hop", "1.00", "1.00"), (272, "four-hop", "0.21", "0.75")):
-        d.text((1086, row_y + 4), label, font=F_SMALL, fill=MUTED)
-        d.text((1290, row_y), a, font=F_BOX, fill=AMBER_TX)
-        d.text((1380, row_y + 4), "vs", font=F_SMALL, fill=FAINT)
-        d.text((1430, row_y), b, font=F_BOX, fill=EMER_TX)
+        if rel:
+            mid = x2 + gap / 2
+            d.line([(x2 + 12, y1 + 62), (x2 + gap - 18, y1 + 62)], fill="#cbd5e1", width=2)
+            chevron(d, x2 + gap - 22, y1 + 62, "#94a3b8", 7, 2)
+            rw = width_of(d, rel, F_REL)
+            d.rounded_rectangle(
+                (mid - rw / 2 - 10, y1 + 18, mid + rw / 2 + 10, y1 + 44),
+                radius=7, fill="#ffffff", outline=HAIRLINE, width=1,
+            )
+            centred(d, rel, mid, y1 + 31, F_REL, MUTED)
 
-    # Lanes ----------------------------------------------------------
-    lane(
-        d, 372, "BASIC RAG", AMBER_TX,
-        [
-            ("Chunk", "fixed windows"),
-            ("Embed", "dense vectors"),
-            ("Vector search", "top-K cosine"),
-            ("LLM", "answer"),
-        ],
-        AMBER_BG, AMBER_BR, AMBER_TX,
-        "retrieves text that looks like the question",
+    d.text(
+        (70, 402),
+        "One real question spans five documents. No single document holds two consecutive links.",
+        font=F_SMALL,
+        fill=MUTED,
     )
+    d.line([(70, 446), (1530, 446)], fill=HAIRLINE, width=2)
 
-    lane(
-        d, 578, "SEMANTIC RAG", EMER_TX,
-        [
-            ("Extract", "entities + relations"),
-            ("Knowledge graph", "typed, with provenance"),
-            ("Traverse", "multi-hop paths"),
-            ("Expand", "grounded passages"),
-            ("LLM", "answer"),
-        ],
-        EMER_BG, EMER_BR, EMER_TX,
-        "retrieves the facts that connect to the question",
+    # --- the two lanes -------------------------------------------------
+    lanes = (
+        (
+            lane_boxes[0], "BASIC RAG", "finds text that resembles the question",
+            AMBER, BASIC_STEPS, "\u201cWhich text is most similar?\u201d",
+        ),
+        (
+            lane_boxes[1], "SEMANTIC RAG", "follows the facts that connect to it",
+            EMER, SEMANTIC_STEPS, "\u201cWhich entities and relationships are relevant?\u201d",
+        ),
     )
+    for box, name, note, pal, steps, quote in lanes:
+        x1, y1, x2, y2 = box
+        d.rounded_rectangle(box, radius=20, fill="#ffffff", outline=HAIRLINE, width=2)
+        d.rounded_rectangle((x1, y1 + 2, x1 + 8, y2 - 2), radius=4, fill=pal["dot"])
 
-    # The chain, full width so nothing clips -------------------------
-    rounded(d, (70, 716, 1530, 826), 16, "#ffffff", EMER_BR, 2)
-    d.text((94, 734), "THE CHAIN BASIC RAG CANNOT WALK", font=F_TAG, fill=EMER_TX)
-    d.text((470, 734), "no single document holds two consecutive links", font=F_SMALL, fill=MUTED)
+        d.text((x1 + 36, y1 + 24), name, font=F_LANE, fill=pal["tx"])
+        d.text((x1 + 36, y1 + 58), note, font=F_SMALL, fill=MUTED)
+        d.text((x1 + 36, y1 + 88), quote, font=F_QUOTE, fill=INK)
 
-    chain = ["Project Phoenix", "C-17", "Alpha Precision Systems", "C-2048", "R-17"]
-    widths = [d.textbbox((0, 0), n, font=F_BOX)[2] + 30 for n in chain]
-    total = sum(widths) + 30 * (len(chain) - 1)
-    cx = (W - total) / 2
-    for i, node in enumerate(chain):
-        w = widths[i]
-        rounded(d, (cx, 766, cx + w, 806), 10, EMER_BG, EMER_BR, 2)
-        centred(d, node, cx + w / 2, 786, F_BOX, INK)
-        cx += w
-        if i < len(chain) - 1:
-            arrow(d, cx + 5, 786, cx + 25, FAINT, 2)
-            cx += 30
+        sx = x1 + 700
+        for j, step in enumerate(steps):
+            sw = width_of(d, step, F_STEP) + 40
+            d.rounded_rectangle(
+                (sx, y1 + 40, sx + sw, y1 + 90), radius=12,
+                fill=pal["bg"], outline=pal["br"], width=2,
+            )
+            centred(d, step, sx + sw / 2, y1 + 65, F_STEP, pal["tx"])
+            sx += sw
+            if j < len(steps) - 1:
+                chevron(d, sx + 9, y1 + 65, "#cbd5e1", 6, 2)
+                sx += 28
 
-    # The two questions ----------------------------------------------
-    y = 852
-    rounded(d, (70, y, 760, y + 68), 14, AMBER_BG, AMBER_BR, 2)
-    d.text((94, y + 12), "Basic RAG asks", font=F_TAG, fill=AMBER_TX)
-    d.text((94, y + 34), "“Which text is most similar?”", font=F_QUOTE, fill=INK)
+        d.text((x1 + 700, y1 + 98), "then the same LLM, the same prompt", font=F_SMALL, fill=FAINT)
 
-    rounded(d, (800, y, 1530, y + 68), 14, EMER_BG, EMER_BR, 2)
-    d.text((824, y + 12), "Semantic RAG asks", font=F_TAG, fill=EMER_TX)
-    d.text((824, y + 34), "“Which entities and relationships are relevant?”", font=F_QUOTE, fill=INK)
+    # --- footer metrics -------------------------------------------------
+    y = 902
+    d.text((70, y - 4), "ANSWER CORRECTNESS", font=F_TAG, fill=MUTED)
+    d.text((70, y + 22), "15 questions \u00b7 ground truth \u00b7 same LLM", font=F_SMALL, fill=FAINT)
 
-    img.save(out, "PNG")
-    print(f"wrote {out} ({img.width}x{img.height})")
+    for lx, label, a, b in ((520, "SINGLE-HOP", "1.00", "1.00"), (930, "FOUR-HOP", "0.21", "0.75")):
+        d.text((lx, y - 4), label, font=F_TAG, fill=MUTED)
+        d.text((lx, y + 18), a, font=F_BIG, fill=AMBER["tx"])
+        aw = width_of(d, a, F_BIG)
+        d.text((lx + aw + 18, y + 34), "vs", font=F_SMALL, fill=FAINT)
+        d.text((lx + aw + 62, y + 18), b, font=F_BIG, fill=EMER["tx"])
+
+    d.text((1340, y - 4), "MIT \u00b7 OPEN SOURCE", font=F_TAG, fill=MUTED)
+    d.text((1340, y + 22), "built with Semantica", font=F_SMALL, fill=FAINT)
+
+    c.img.save(out, "PNG")
+    print(f"wrote {out} ({c.img.width}x{c.img.height})")
 
 
 if __name__ == "__main__":
